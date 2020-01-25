@@ -1,3 +1,9 @@
+% Creator: Rudi Hidvary 
+% Student Number: 101037815
+% Class: ELEC 4700 
+% Document: Assignment 1
+
+
 clear
 clc
 
