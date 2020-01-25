@@ -15,8 +15,8 @@ length = 200e-9;        % size of simulation in x dierection (m)
 height = 100e-9;        % size of simulation in y direction (m)
 temperature = 300;      % temperature in kelvin
 me = 0.26*m0;           % Effective mass of an electorn in our simulation
-e_num = 50;             % Number of electrons in the simulation 
-simlength = 100;        % Sests the number of iterations the simulation undergoes
+e_num = 8;              % Number of electrons in the simulation 
+simlength = 25;         % Sests the number of iterations the simulation undergoes
 
 % Initial Calculations 
 thermal_velocity = sqrt((k*temperature)/me) % velocity in (m/s)
@@ -79,15 +79,12 @@ end
 hold off
 
 time = 1:simlength
-
 figure(3) 
 plot(time,temp)
-title('')
-xlabel('')
-ylabel('')
 grid on
-axis([time(1) time(end) 0 max(temp)+10])
+axis([time(0)-1 time(end) 0 max(temp)+1])
 
+max
 % Mean Free Path Calculation
 Tmn = 0.2e-12; % Mean time between collisions 
 MFP = averageVel*Tmn % Mean didtance travelled before collision occurs
