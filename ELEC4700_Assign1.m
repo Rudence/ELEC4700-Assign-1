@@ -3,6 +3,10 @@
 % Class: ELEC 4700 
 % Document: Assignment 1
 
+% QUESTIONS
+% Q1: how do i get the trajectories not just the current values 
+% Q2 mean free path for part 2 and how to get the time between collisions 
+
 clear
 clc
 
@@ -16,7 +20,7 @@ height = 100e-9;        % size of simulation in y direction (m)
 temperature = 300;      % temperature in kelvin
 me = 0.26*m0;           % Effective mass of an electorn in our simulation
 e_num = 400;             % Number of electrons in the simulation 
-simlength = 2000;        % Sests the number of iterations the simulation undergoes
+simlength = 200;        % Sests the number of iterations the simulation undergoes
 graph_pause = 1;
 sim_pause = 0.00001;
 
@@ -26,7 +30,7 @@ sim_pause = 0.00001;
 thermal_velocity = sqrt((2*k*temperature)/me) % velocity in (m/s)
 
 % Initializing the Simulation Parameters 
-initial_xposition = length*rand(e_num,1); % Sets the initial x positions as a vector of randomly selected numbers over the length of the simulation
+initial_xposition = length*rand(e_num,1) % Sets the initial x positions as a vector of randomly selected numbers over the length of the simulation
 initial_yposition = height*rand(e_num,1); % Sets the initial y position as a vector of randomly selected numbers over the length of the simulation
 theta = 2*pi*rand(e_num,1); % Initializes a vector of random angles the size of the number of electrons
 initial_xvelocity = thermal_velocity.*cos(theta).*ones(e_num,1); % Sets the initial velocity as the thermal temperature  
@@ -91,12 +95,11 @@ time = 1:simlength;
 
 % Question 1.c.ii TEMPERATURE PLOT
 figure(3) 
-plot(time,temp)
-title('')
-xlabel('')
-ylabel('')
+plot(time*timestep,temp)
+title('Simulation Temperature Over Time')
+xlabel('Time (s)')
+ylabel('Simulation Temperature')
 grid on
-axis([time(1) time(end) 0 max(temp)+100])
 pause(graph_pause)
 
 % Question 1.b MEAN FREE PATH
@@ -110,14 +113,13 @@ MFP = averageVel*Tmn % Mean didtance travelled before collision occurs
 
 
 
-
 % Question 2.a
 % Initial Calculations 
 % Question 1.a THERMAL VELOCITY
 thermal_velocity = sqrt((2*k*temperature)/me) % velocity in (m/s)
 std_thermal_velocity = 0.1*thermal_velocity;
 random_velocity = normrnd(thermal_velocity,std_thermal_velocity,[e_num,1]);
-bin_num = 5;
+bin_num = 7;
 figure(4)
 velocity_hist = histogram(random_velocity,bin_num);
 title('Thermal Velocity Distribution')
@@ -156,7 +158,7 @@ for time = 1:simlength
 
 % Electron scattering and reevaluation of velocity
 rand_threshold = rand(e_num,1);
-Pscatter = (1-exp(-(timestep/Tmn)))
+Pscatter = (1-exp(-(timestep/Tmn)));
     for index = 1:e_num
         if rand_threshold(index) < Pscatter 
             theta = 2*pi*rand(1);
@@ -202,16 +204,15 @@ time = 1:simlength;
 
 % Question 1.c.ii TEMPERATURE PLOT
 figure(7) 
-plot(time,temp)
-title('')
-xlabel('')
-ylabel('')
+plot(time*timestep,temp)
+title('Average Temperature Over Time')
+xlabel('Time (s)')
+ylabel('Simulation Temperature (K)')
 grid on
-axis([time(1) time(end) 0 max(temp)+100])
 pause(graph_pause)
 
 % Question 1.b MEAN FREE PATH
-% Mean Free Path Calculation 
+% Mean Free Path Calculation  
 Tmn = 0.2e-12; % Mean time between collisions 
 MFP = averageVel*Tmn % Mean didtance travelled before collision occurs
 
