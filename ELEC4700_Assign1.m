@@ -20,10 +20,10 @@ length = 200e-9;        % size of simulation in x dierection (m)
 height = 100e-9;        % size of simulation in y direction (m)
 temperature = 300;      % temperature in kelvin
 me = 0.26*m0;           % Effective mass of an electorn in our simulation
-e_num = 300;             % Number of electrons in the simulation 
-simlength = 100;        % Sests the number of iterations the simulation undergoes
-graph_pause = 1;
-sim_pause = 0.001;
+e_num = 500;             % Number of electrons in the simulation 
+simlength = 300;        % Sests the number of iterations the simulation undergoes
+graph_pause = 0.1;
+sim_pause = 0.0001;
 
 
 % Initial Calculations 
@@ -61,6 +61,10 @@ temp = [initial_temp];
 % and calculates the 
 for time = 1:simlength 
         
+averageVel = (mean(new_xvelocity.^2)) + (mean(new_yvelocity.^2)); % Calculates the average velocity of the particles at given timestep
+temp(time) = (averageVel*me)/(2*k); % Using the avaerge velocity, find the temperature of the system at this giventimestep
+
+    
 new_xposition = new_xposition + new_xvelocity*timestep;
 new_yposition = new_yposition + new_yvelocity*timestep;
  
@@ -90,9 +94,6 @@ grid on
 axis([0 200e-9 0 100e-9]) 
 pause(sim_pause)
 
-averageVel = (mean(new_xvelocity.^2)) + (mean(new_yvelocity.^2)); % Calculates the average velocity of the particles at given timestep
-temp(time) = (averageVel*me)/(2*k); % Using the avaerge velocity, find the temperature of the system at this giventimestep
-
 end
 hold off
 
@@ -116,6 +117,13 @@ MFP_Q1 = averageVel*Tmn % Mean didtance travelled before collision occurs using 
 
 
 
+
+
+
+
+
+
+
 %------------------------------------------------------------------------------------------------------------------------------------------------
 % Question 2.a
 
@@ -128,7 +136,7 @@ distribution1 = randn(e_num,1)*(thermal_velocity/sqrt(2));
 distribution2 = randn(e_num,1)*(thermal_velocity/sqrt(2));
 maxwell_boltzmann_dist = sqrt((distribution1.^2)+(distribution2.^2));
 random_velocity = maxwell_boltzmann_dist;
-bin_num = 40;
+bin_num = 15;
 figure(8)
 velocity_hist = histogram(random_velocity,bin_num);
 title('Thermal Velocity Distribution')
@@ -177,15 +185,15 @@ for time = 1:simlength
 
 % Electron scattering and reevaluation of velocity
 rand_threshold = rand(e_num,1); % Sets a vector of random numbers for each electron
+distribution1 = randn(e_num,1)*(thermal_velocity/sqrt(2));
+distribution2 = randn(e_num,1)*(thermal_velocity/sqrt(2));
+maxwell_boltzmann_dist = sqrt((distribution1.^2)+(distribution2.^2));
+new_velocity = maxwell_boltzmann_dist;
     for index = 1:e_num
         if rand_threshold(index) < Pscatter 
             theta = 2*pi*rand(1);
-            distribution1 = randn(1)*(thermal_velocity/sqrt(2));
-            distribution2 = randn(1)*(thermal_velocity/sqrt(2));
-            maxwell_boltzmann_dist = sqrt((distribution1.^2)+(distribution2.^2));
-            new_velocity = maxwell_boltzmann_dist;
-            new_xvelocity(index) = cos(theta)*new_velocity;  
-            new_yvelocity(index) = sin(theta)*new_velocity;
+            new_xvelocity(index) = cos(theta)*new_velocity(e_num);  
+            new_yvelocity(index) = sin(theta)*new_velocity(e_num);
         end
     end
     
@@ -262,7 +270,7 @@ distribution1 = randn(e_num,1)*(thermal_velocity/sqrt(2));
 distribution2 = randn(e_num,1)*(thermal_velocity/sqrt(2));
 maxwell_boltzmann_dist = sqrt((distribution1.^2)+(distribution2.^2));
 random_velocity = maxwell_boltzmann_dist;
-bin_num = 40;
+bin_num = 15;
 figure(8)
 velocity_hist = histogram(random_velocity,bin_num);
 title('Thermal Velocity Distribution')
@@ -280,7 +288,7 @@ initial_yposition = height*rand(e_num,1); % Sets the initial y position as a vec
 
 % Reinitializing electrons that spawned in restricted regions
 % Length of the channel or bottleneck and height are determined here
-Lbottle = 100e-9;
+Lbottle = 80e-9;
 Hbottle = 20e-9;
 % Checking the boundaries and reinitializing the ones that are restricted
 inboundx = (initial_xposition < ((length/2)+(Lbottle/2))) & (initial_xposition > ((length/2)-(Lbottle/2)));
@@ -334,15 +342,15 @@ for time = 1:simlength
 
 % Electron scattering and reevaluation of velocity
 rand_threshold = rand(e_num,1); % Sets a vector of random numbers for each electron
+distribution1 = randn(e_num,1)*(thermal_velocity/sqrt(2));
+distribution2 = randn(e_num,1)*(thermal_velocity/sqrt(2));
+maxwell_boltzmann_dist = sqrt((distribution1.^2)+(distribution2.^2));
+new_velocity = maxwell_boltzmann_dist;
     for index = 1:e_num
         if rand_threshold(index) < Pscatter 
             theta = 2*pi*rand(1);
-            distribution1 = randn(1)*(thermal_velocity/sqrt(2));
-            distribution2 = randn(1)*(thermal_velocity/sqrt(2));
-            maxwell_boltzmann_dist = sqrt((distribution1.^2)+(distribution2.^2));
-            new_velocity = maxwell_boltzmann_dist;
-            new_xvelocity(index) = cos(theta)*new_velocity;  
-            new_yvelocity(index) = sin(theta)*new_velocity;
+            new_xvelocity(index) = cos(theta)*new_velocity(index);  
+            new_yvelocity(index) = sin(theta)*new_velocity(index);
         end
     end
     
@@ -361,11 +369,27 @@ new_yvelocity(underboundy) = -new_yvelocity(underboundy);
 
 % if particles come from left and go over to restricted region, flip the
 % velocities
-overleft = ((new_xposition < (length/2)) & (new_xposition > ((length/2)-(Lbottle/2)))) & ((new_yposition < (height/2)-(Hbottle/2))) | (new_yposition > ((height/2)+(Hbottle/2))); 
-overright = ((new_xposition > (length/2)) & (new_xposition < ((length/2)+(Lbottle/2)))) & ((new_yposition < (height/2)-(Hbottle/2))) | (new_yposition > ((height/2)+(Hbottle/2)));
+distribution1 = randn(e_num,1)*(thermal_velocity/sqrt(2));
+distribution2 = randn(e_num,1)*(thermal_velocity/sqrt(2));
+maxwell_boltzmann_dist = sqrt((distribution1.^2)+(distribution2.^2));
+new_velocity = maxwell_boltzmann_dist;
 
-new_xvelocity(overleft) = -new_xvelocity(overleft);
-new_xvelocity(overright) = -new_xvelocity(overright);
+overhorizontal =  & (new_xposition > ((length/2)-(Lbottle/2))) & (new_xposition < ((length/2)+(Lbottle/2))) & ((new_yposition < (height/2)-(Hbottle/2))) | (new_yposition > ((height/2)+(Hbottle/2)))
+%overleft = ((new_xposition < (length/2))) & (new_xposition > (length/2-Lbottle/2)) & ((new_yposition < (height/2)-(Hbottle/2))) | (new_yposition > ((height/2)+(Hbottle/2))); 
+%overright = ((new_xposition > (length/2))) & (new_xposition < (length/2+Lbottle/2)) & ((new_yposition < (height/2)-(Hbottle/2))) | (new_yposition > ((height/2)+(Hbottle/2)));
+%overup = new_yposition > ((height/2)+(Hbottle/2)) & ((new_xposition < (length/2)+(Lbottle/2)) & (new_xposition > ((length/2)-(Lbottle/2))))
+%overdown = new_yposition < ((height/2)-(Hbottle/2)) & ((new_xposition < (length/2)+(Lbottle/2)) & (new_xposition > ((length/2)-(Lbottle/2))))
+
+theta = 2*pi*rand(1);
+new_xvelocity(overhorizontal) = cos(theta)*new_velocity(overhorizontal);  
+new_yvelocity(overhorizontal) = sin(theta)*new_velocity(overhorizontal);
+
+%new_xvelocity(overleft) = -new_xvelocity(overleft);
+%new_yvelocity(overleft) = -new_yvelocity(overleft);
+%new_xvelocity(overright) = -new_xvelocity(overright);
+%new_yvelocity(overright) = -new_yvelocity(overright);
+%new_yvelocity(overup) = -new_yvelocity(overup);
+%new_yvelocity(overdown) = -new_yvelocity(overdown);
 
 
 % Plotting the updating positions 
@@ -403,6 +427,13 @@ pause(graph_pause)
 Tmn = 0.2e-12; % Mean time between collisions 
 MFP_average = mean(MFP) % Mean distance travelled before collision occurs
 TMN_average = mean(TMN) % Mean time between collisions calculated using a known 
+
+
+
+figure(12)
+hist3([new_xposition new_yposition],[10,10])
+set(gcf,'renderer','opengl');
+set(get(gca,'child'),'FaceColor','interp','CDataMode','auto');
 
 
 
