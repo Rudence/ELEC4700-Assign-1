@@ -21,9 +21,9 @@ height = 100e-9;        % size of simulation in y direction (m)
 temperature = 300;      % temperature in kelvin
 me = 0.26*m0;           % Effective mass of an electorn in our simulation
 e_num = 500;             % Number of electrons in the simulation 
-simlength = 300;        % Sests the number of iterations the simulation undergoes
+simlength = 200;        % Sests the number of iterations the simulation undergoes
 graph_pause = 0.1;
-sim_pause = 0.0001;
+sim_pause = 0.0000001;
 
 
 % Initial Calculations 
@@ -279,7 +279,9 @@ ylabel('Number of Particles Within Range')
 grid on
 pause(graph_pause)
 
-% Block Generation Code
+% Setting whether the boundaries are specular = 0 or diffusive = 1
+boundary_type = 0; % Specular
+% boundary_type = 1; % Diffusive
 
 
 % Initializing the Simulation Parameters 
@@ -320,8 +322,8 @@ pause(graph_pause)
 
 timestep = 1e-15; % Timestep is the amount of time between each interval of the calculations 
 
-new_xposition = initial_xposition; % Sets the 
-new_yposition = initial_yposition;
+old_xposition = initial_xposition; % Sets the 
+old_yposition = initial_yposition;
 new_xvelocity = initial_xvelocity;
 new_yvelocity = initial_yvelocity;
 
@@ -354,8 +356,8 @@ new_velocity = maxwell_boltzmann_dist;
         end
     end
     
-new_xposition = new_xposition + new_xvelocity*timestep;
-new_yposition = new_yposition + new_yvelocity*timestep;
+new_xposition = old_xposition + new_xvelocity*timestep;
+new_yposition = old_yposition + new_yvelocity*timestep;
 
 % Boundary Conditions being imposed 
 overboundx = new_xposition > 200e-9;
@@ -367,35 +369,47 @@ new_xposition(underboundx) = new_xposition(underboundx) + 200e-9;
 new_yvelocity(overboundy) = -new_yvelocity(overboundy);
 new_yvelocity(underboundy) = -new_yvelocity(underboundy);
 
+% Restricted Region Boundary Cases
+overhorizontal =  (new_xposition > ((length/2)-(Lbottle/2))) & (new_xposition < ((length/2)+(Lbottle/2))) & ((new_yposition < ((height/2)-(Hbottle/2))) | (new_yposition > ((height/2)+(Hbottle/2))));
+previous_left = (old_xposition < ((length/2)-(Lbottle/2)));
+previous_right = (old_xposition > ((length/2)+(Lbottle/2)));
+previous_in = (old_xposition > ((length/2)-(Lbottle/2))) & (old_xposition < ((length/2)+(Lbottle/2)));
 % if particles come from left and go over to restricted region, flip the
-% velocities
-distribution1 = randn(e_num,1)*(thermal_velocity/sqrt(2));
-distribution2 = randn(e_num,1)*(thermal_velocity/sqrt(2));
-maxwell_boltzmann_dist = sqrt((distribution1.^2)+(distribution2.^2));
-new_velocity = maxwell_boltzmann_dist;
-
-overhorizontal =  & (new_xposition > ((length/2)-(Lbottle/2))) & (new_xposition < ((length/2)+(Lbottle/2))) & ((new_yposition < (height/2)-(Hbottle/2))) | (new_yposition > ((height/2)+(Hbottle/2)))
-%overleft = ((new_xposition < (length/2))) & (new_xposition > (length/2-Lbottle/2)) & ((new_yposition < (height/2)-(Hbottle/2))) | (new_yposition > ((height/2)+(Hbottle/2))); 
-%overright = ((new_xposition > (length/2))) & (new_xposition < (length/2+Lbottle/2)) & ((new_yposition < (height/2)-(Hbottle/2))) | (new_yposition > ((height/2)+(Hbottle/2)));
-%overup = new_yposition > ((height/2)+(Hbottle/2)) & ((new_xposition < (length/2)+(Lbottle/2)) & (new_xposition > ((length/2)-(Lbottle/2))))
-%overdown = new_yposition < ((height/2)-(Hbottle/2)) & ((new_xposition < (length/2)+(Lbottle/2)) & (new_xposition > ((length/2)-(Lbottle/2))))
-
-theta = 2*pi*rand(1);
-new_xvelocity(overhorizontal) = cos(theta)*new_velocity(overhorizontal);  
-new_yvelocity(overhorizontal) = sin(theta)*new_velocity(overhorizontal);
-
-%new_xvelocity(overleft) = -new_xvelocity(overleft);
-%new_yvelocity(overleft) = -new_yvelocity(overleft);
-%new_xvelocity(overright) = -new_xvelocity(overright);
-%new_yvelocity(overright) = -new_yvelocity(overright);
-%new_yvelocity(overup) = -new_yvelocity(overup);
-%new_yvelocity(overdown) = -new_yvelocity(overdown);
-
+% velocities 
+% Diffusive Boundary (Random Generated new velocity)
+if (boundary_type == 1)
+    distribution1 = randn(e_num,1)*(thermal_velocity/sqrt(2));
+    distribution2 = randn(e_num,1)*(thermal_velocity/sqrt(2));
+    maxwell_boltzmann_dist = sqrt((distribution1.^2)+(distribution2.^2));
+    new_velocity = maxwell_boltzmann_dist;
+    
+    theta = 2*pi*rand(e_num,1);
+    % For the electron to the left of the boundary
+    new_xvelocity(overhorizontal & previous_left) = -abs(cos(theta(overhorizontal & previous_left))*new_xvelocity(overhorizontal & previous_left));
+    new_yvelocity(overhorizontal & previous_left) = sin(theta(overhorizontal & previous_left))*new_yvelocity(overhorizontal & previous_left);
+    % for the electrons to the right of the boundary
+    new_xvelocity(overhorizontal & previous_right) = abs(cos(theta(overhorizontal & previous_left))*new_xvelocity(overhorizontal & previous_left));
+    new_yvelocity(overhorizontal & previous_right) = sin(theta(overhorizontal & previous_left))*new_yvelocity(overhorizontal & previous_left);
+    % for theelectron sin the tunnel region
+    new_xvelocity(overhorizontal & previous_in) = cos(theta(overhorizontal & previous_left))*new_xvelocity(overhorizontal & previous_left);
+    new_yvelocity(overhorizontal & previous_in) = sin(theta(overhorizontal & previous_left))*new_yvelocity(overhorizontal & previous_left);
+    
+end
+else 
+    new_xvelocity(overhorizontal & (previous_left | previous_right)) = -new_xvelocity(overhorizontal & (previous_left | previous_right));
+    new_yvelocity(overhorizontal & previous_in) = -new_yvelocity(overhorizontal & previous_in);
+end
 
 % Plotting the updating positions 
-% Question 1.c.i 2D PLOT OF TRAJECTORIES
+% Question 3.a 2D PLOT OF TRAJECTORIES
+
+% ATTEMPT AT TRAJECTORIES 
+% plotx = [old_xposition new_xposition]
+% plotx = plotx'
+% ploty = [old_yposition new_yposition]
+% ploty = ploty'
 figure(10)
-plot(new_xposition,new_yposition,'ro')
+plot(plotx,ploty,'ro')
 title('Simulation')
 xlabel('Distance (nm)')
 ylabel('Distance (nm)')
@@ -407,6 +421,9 @@ averageVel = (mean(new_xvelocity.^2)) + (mean(new_yvelocity.^2));
 temp(time) = (averageVel*me)/(2*k);
 MFP(time) = averageVel*Tmn; % Uses the given Tmn to find the MFP for this simulation
 TMN(time) = MFP_Q1/averageVel; % Uses the previously calculated MFP in part 1 to find the average time of collisions
+
+old_xposition = new_xposition;
+old_yposition = new_yposition;
 
 end
 hold off
