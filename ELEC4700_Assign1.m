@@ -230,9 +230,8 @@ TMN(time) = MFP_Q1/averageVel; % Uses the previously calculated MFP in part 1 to
 
 end
 
-% meantime = (timestep*simlength*e_num)/collision_num
-meantime = (timestep*collision_num)/(e_num)
-Tmn = Tmn
+calculated_Tmn_Q2 = (timestep*simlength*e_num)/(collision_num)
+calculated_MFP_Q2 = calculated_Tmn_Q2*averageVel
 
 % Question 1.c.ii TEMPERATURE PLOT
 time = 1:simlength;
