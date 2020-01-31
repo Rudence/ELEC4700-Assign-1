@@ -8,6 +8,7 @@
 % Q2: mean free path for part 2 and how to get the time between collisions 
 % Q3: How do i fix time on the temp graphs 
 
+close all
 clear
 clc
 
@@ -20,9 +21,9 @@ length = 200e-9;        % size of simulation in x dierection (m)
 height = 100e-9;        % size of simulation in y direction (m)
 temperature = 300;      % temperature in kelvin
 me = 0.26*m0;           % Effective mass of an electorn in our simulation
-e_num = 500;             % Number of electrons in the simulation 
-simlength = 200;        % Sests the number of iterations the simulation undergoes
-graph_pause = 0.1;
+e_num = 1000;             % Number of electrons in the simulation 
+simlength = 100;        % Sests the number of iterations the simulation undergoes
+graph_pause = 1;
 sim_pause = 0.0000001;
 
 
@@ -82,7 +83,6 @@ new_yvelocity(underboundy) = -new_yvelocity(underboundy);
 
 % Boundary Conditions for Bottleneck region
 
-
 % Plotting the updating positions 
 % Question 1.c.i 2D PLOT OF TRAJECTORIES
 figure(2)
@@ -136,9 +136,9 @@ distribution1 = randn(e_num,1)*(thermal_velocity/sqrt(2));
 distribution2 = randn(e_num,1)*(thermal_velocity/sqrt(2));
 maxwell_boltzmann_dist = sqrt((distribution1.^2)+(distribution2.^2));
 random_velocity = maxwell_boltzmann_dist;
-bin_num = 15;
-figure(8)
-velocity_hist = histogram(random_velocity,bin_num);
+bin_num = 10;
+figure(4)
+histogram(random_velocity,bin_num);
 title('Thermal Velocity Distribution')
 xlabel('Random Thermal Velocity (m/s)')
 ylabel('Number of Particles Within Range')
@@ -178,13 +178,13 @@ Pscatter = (1-exp(-(timestep/Tmn))); % Used to compare to random variable for sc
 % Mean Free Path and Mean Collision Time Equations
 MFP = [];
 TMN = [];
-
+collision_num = 0; 
 % Simulation loop that continually updates the simulation at each timestep
 % and calculates the 
 for time = 1:simlength 
 
 % Electron scattering and reevaluation of velocity
-rand_threshold = rand(e_num,1); % Sets a vector of random numbers for each electron
+rand_threshold = rand(e_num,1); % Sets a vector of random numbers for each electron to be compared to the scattering value
 distribution1 = randn(e_num,1)*(thermal_velocity/sqrt(2));
 distribution2 = randn(e_num,1)*(thermal_velocity/sqrt(2));
 maxwell_boltzmann_dist = sqrt((distribution1.^2)+(distribution2.^2));
@@ -192,8 +192,10 @@ new_velocity = maxwell_boltzmann_dist;
     for index = 1:e_num
         if rand_threshold(index) < Pscatter 
             theta = 2*pi*rand(1);
-            new_xvelocity(index) = cos(theta)*new_velocity(e_num);  
-            new_yvelocity(index) = sin(theta)*new_velocity(e_num);
+            new_xvelocity(index) = cos(theta)*new_velocity(index);  
+            new_yvelocity(index) = sin(theta)*new_velocity(index);
+            %Counts the number of collisions that have occured
+            collision_num = collision_num + 1;
         end
     end
     
@@ -227,7 +229,10 @@ MFP(time) = averageVel*Tmn; % Uses the given Tmn to find the MFP for this simula
 TMN(time) = MFP_Q1/averageVel; % Uses the previously calculated MFP in part 1 to find the average time of collisions
 
 end
-hold off
+
+% meantime = (timestep*simlength*e_num)/collision_num
+meantime = (timestep*collision_num)/(e_num)
+Tmn = Tmn
 
 % Question 1.c.ii TEMPERATURE PLOT
 time = 1:simlength;
@@ -270,9 +275,9 @@ distribution1 = randn(e_num,1)*(thermal_velocity/sqrt(2));
 distribution2 = randn(e_num,1)*(thermal_velocity/sqrt(2));
 maxwell_boltzmann_dist = sqrt((distribution1.^2)+(distribution2.^2));
 random_velocity = maxwell_boltzmann_dist;
-bin_num = 15;
+bin_num = 10;
 figure(8)
-velocity_hist = histogram(random_velocity,bin_num);
+histogram(random_velocity,bin_num);
 title('Thermal Velocity Distribution')
 xlabel('Random Thermal Velocity (m/s)')
 ylabel('Number of Particles Within Range')
@@ -280,8 +285,8 @@ grid on
 pause(graph_pause)
 
 % Setting whether the boundaries are specular = 0 or diffusive = 1
-boundary_type = 0; % Specular
-% boundary_type = 1; % Diffusive
+% boundary_type = 0; % Specular
+ boundary_type = 1; % Diffusive
 
 
 % Initializing the Simulation Parameters 
@@ -385,16 +390,15 @@ if (boundary_type == 1)
     
     theta = 2*pi*rand(e_num,1);
     % For the electron to the left of the boundary
-    new_xvelocity(overhorizontal & previous_left) = -abs(cos(theta(overhorizontal & previous_left))*new_xvelocity(overhorizontal & previous_left));
-    new_yvelocity(overhorizontal & previous_left) = sin(theta(overhorizontal & previous_left))*new_yvelocity(overhorizontal & previous_left);
+    new_xvelocity(overhorizontal & previous_left) = -abs(cos(theta(overhorizontal & previous_left)).*new_velocity(overhorizontal & previous_left));
+    new_yvelocity(overhorizontal & previous_left) = sin(theta(overhorizontal & previous_left)).*new_velocity(overhorizontal & previous_left);
     % for the electrons to the right of the boundary
-    new_xvelocity(overhorizontal & previous_right) = abs(cos(theta(overhorizontal & previous_left))*new_xvelocity(overhorizontal & previous_left));
-    new_yvelocity(overhorizontal & previous_right) = sin(theta(overhorizontal & previous_left))*new_yvelocity(overhorizontal & previous_left);
+    new_xvelocity(overhorizontal & previous_right) = abs(cos(theta(overhorizontal & previous_right)).*new_velocity(overhorizontal & previous_right));
+    new_yvelocity(overhorizontal & previous_right) = sin(theta(overhorizontal & previous_right)).*new_velocity(overhorizontal & previous_right);
     % for theelectron sin the tunnel region
-    new_xvelocity(overhorizontal & previous_in) = cos(theta(overhorizontal & previous_left))*new_xvelocity(overhorizontal & previous_left);
-    new_yvelocity(overhorizontal & previous_in) = sin(theta(overhorizontal & previous_left))*new_yvelocity(overhorizontal & previous_left);
+    new_xvelocity(overhorizontal & previous_in) = cos(theta(overhorizontal & previous_in)).*new_velocity(overhorizontal & previous_in);
+    new_yvelocity(overhorizontal & previous_in) = sin(theta(overhorizontal & previous_in)).*new_velocity(overhorizontal & previous_in);
     
-end
 else 
     new_xvelocity(overhorizontal & (previous_left | previous_right)) = -new_xvelocity(overhorizontal & (previous_left | previous_right));
     new_yvelocity(overhorizontal & previous_in) = -new_yvelocity(overhorizontal & previous_in);
@@ -409,7 +413,7 @@ end
 % ploty = [old_yposition new_yposition]
 % ploty = ploty'
 figure(10)
-plot(plotx,ploty,'ro')
+plot(new_xposition,new_yposition,'ro')
 title('Simulation')
 xlabel('Distance (nm)')
 ylabel('Distance (nm)')
@@ -426,7 +430,6 @@ old_xposition = new_xposition;
 old_yposition = new_yposition;
 
 end
-hold off
 
 % Question 1.c.ii TEMPERATURE PLOT
 time = 1:simlength;
