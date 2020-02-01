@@ -26,10 +26,10 @@ length = 200e-9;        % size of simulation in x dierection (m)
 height = 100e-9;        % size of simulation in y direction (m)
 temperature = 300;      % temperature in kelvin
 me = 0.26*m0;           % Effective mass of an electorn in our simulation
-e_num = 300;            % Number of electrons in the simulation 
-simlength = 50;        % Sets the number of iterations the simulation undergoes
+e_num = 3000;            % Number of electrons in the simulation 
+simlength = 20;        % Sets the number of iterations the simulation undergoes
 graph_pause = 1;        % Length graph is presented in a figure 
-sim_pause = 0.0000001;  % 
+sim_pause = 0.00001;  % 
 % the bin number calculation gives a reasonable bin number for any amount
 % of particles over 30, 
 bin_num =  10; %ceil(2.5*log10(e_num));           % Histogram bin number 
@@ -445,8 +445,6 @@ for time = 1:simlength
 
     averageVel = (mean(new_xvelocity.^2)) + (mean(new_yvelocity.^2));
     temp(time) = (averageVel*me)/(2*k);
-    MFP(time) = averageVel*Tmn; % Uses the given Tmn to find the MFP for this simulation
-    TMN(time) = MFP_Q1/averageVel; % Uses the previously calculated MFP in part 1 to find the average time of collisions
 
     old_xposition = new_xposition;
     old_yposition = new_yposition;
@@ -481,8 +479,32 @@ fprintf(' (s)\nComparing this to the given value of %d (s)',Tmn)
 fprintf('\nThe mean free path was calculated to be %d',calculated_MFP_Q3)
 fprintf(' (m)\nComparing this to the preeviously calculated value of %d (m)\n',MFP_Q1)
 
-% test to see if git worked
+% Plotting a 3D histogram for the elecron density over the surface of the simulation    
 figure(12)
 hist3([new_xposition new_yposition],[10,10])
 set(gcf,'renderer','opengl');
 set(get(gca,'child'),'FaceColor','interp','CDataMode','auto');
+pause(graph_pause)
+title('Electron Density Visual Map')
+xlabel('Distance in X Direction (m)')
+ylabel('Distance in Y Direction (m)')
+zlabel('number of Electron in Area')
+
+% Calculates the velocity of each of the particles so thaty they can be
+% made into a temperature map.
+particleVel = sqrt((new_xvelocity.^2) + (new_yvelocity.^2));
+particleTemp = (particleVel.*me)./(2*k);
+
+% Plots the colour spectrum for the particles for their calculated
+% temperature and a bar to help dicern the temperature a=of a given
+% particle
+figure(13)
+scatter(new_xposition,new_yposition,12,particleTemp)
+colorbar
+grid on
+title('Coloured Temperature Map of Particles')
+xlabel('Distance in X Direction (m)')
+ylabel('Distance in Y Direction (m)')
+pause(graph_pause)
+axis([0 200e-9 0 100e-9])
+
