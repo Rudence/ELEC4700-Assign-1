@@ -16,16 +16,22 @@ clc
 m0 = 9.11e-31; % electron mass (kg)
 k = 1.381e-23; % boltzmans constant 
 
-%Model Parameters
+% Model Parameters
+% ------------------------------------------------------------------------
+% These parameters can be changed to see the effect they have on the
+% simulation 
 length = 200e-9;        % size of simulation in x dierection (m)
 height = 100e-9;        % size of simulation in y direction (m)
 temperature = 300;      % temperature in kelvin
 me = 0.26*m0;           % Effective mass of an electorn in our simulation
-e_num = 1000;             % Number of electrons in the simulation 
-simlength = 100;        % Sests the number of iterations the simulation undergoes
-graph_pause = 1;
-sim_pause = 0.0000001;
-
+e_num = 300;            % Number of electrons in the simulation 
+simlength = 2;        % Sets the number of iterations the simulation undergoes
+graph_pause = 1;        % Length graph is presented in a figure 
+sim_pause = 0.0000001;  % 
+% the bin number calculation gives a reasonable bin number for any amount
+% of particles over 30, 
+bin_num =  10;%ceil(2.5*log10(e_num));           % Histogram bin number 
+%-------------------------------------------------------------------------
 
 % Initial Calculations 
 % Question 1.a THERMAL VELOCITY
@@ -39,7 +45,7 @@ initial_xvelocity = thermal_velocity.*cos(theta).*ones(e_num,1); % Sets the init
 initial_yvelocity = thermal_velocity.*sin(theta).*ones(e_num,1); % 
 
 figure(1)
-plot(initial_xposition, initial_yposition, 'o')
+plot(initial_xposition, initial_yposition, 'ko')
 title('Initial Particle Positions')
 xlabel('X Position (m)')
 ylabel('Y Position (m)')
@@ -62,37 +68,32 @@ temp = [initial_temp];
 % and calculates the 
 for time = 1:simlength 
         
-averageVel = (mean(new_xvelocity.^2)) + (mean(new_yvelocity.^2)); % Calculates the average velocity of the particles at given timestep
-temp(time) = (averageVel*me)/(2*k); % Using the avaerge velocity, find the temperature of the system at this giventimestep
-
+    averageVel = (mean(new_xvelocity.^2)) + (mean(new_yvelocity.^2)); % Calculates the average velocity of the particles at given timestep
+    temp(time) = (averageVel*me)/(2*k); % Using the averge velocity, find the temperature of the system at this giventimestep
     
-new_xposition = new_xposition + new_xvelocity*timestep;
-new_yposition = new_yposition + new_yvelocity*timestep;
- 
+    new_xposition = new_xposition + new_xvelocity*timestep;
+    new_yposition = new_yposition + new_yvelocity*timestep;
 
+    % Boundary Conditions being imposed 
+    overboundx = new_xposition > 200e-9;
+    underboundx = new_xposition < 0;
+    overboundy = new_yposition > 100e-9;
+    underboundy = new_yposition < 0;
+    new_xposition(overboundx) = new_xposition(overboundx) - 200e-9;  
+    new_xposition(underboundx) = new_xposition(underboundx) + 200e-9;
+    new_yvelocity(overboundy) = -new_yvelocity(overboundy);
+    new_yvelocity(underboundy) = -new_yvelocity(underboundy);
 
-% Boundary Conditions being imposed 
-overboundx = new_xposition > 200e-9;
-underboundx = new_xposition < 0;
-overboundy = new_yposition > 100e-9;
-underboundy = new_yposition < 0;
-new_xposition(overboundx) = new_xposition(overboundx) - 200e-9;  
-new_xposition(underboundx) = new_xposition(underboundx) + 200e-9;
-new_yvelocity(overboundy) = -new_yvelocity(overboundy);
-new_yvelocity(underboundy) = -new_yvelocity(underboundy);
-
-% Boundary Conditions for Bottleneck region
-
-% Plotting the updating positions 
-% Question 1.c.i 2D PLOT OF TRAJECTORIES
-figure(2)
-plot(new_xposition,new_yposition,'ro')
-title('Simulation')
-xlabel('Distance (nm)')
-ylabel('Distance (nm)')
-grid on
-axis([0 200e-9 0 100e-9]) 
-pause(sim_pause)
+    % Plotting the updating positions 
+    % Question 1.c.i 2D PLOT OF TRAJECTORIES
+    figure(2)
+    plot(new_xposition,new_yposition,'ro')
+    title('Simulation')
+    xlabel('Distance (nm)')
+    ylabel('Distance (nm)')
+    grid on
+    axis([0 200e-9 0 100e-9]) 
+    pause(sim_pause)
 
 end
 hold off
@@ -104,7 +105,7 @@ figure(3)
 plot(time*timestep,temp)
 title('Simulation Temperature Over Time')
 xlabel('Time (s)')
-ylabel('Simulation Temperature')
+ylabel('Simulation Temperature (Kelvin)')
 grid on
 pause(graph_pause)
 
@@ -136,7 +137,6 @@ distribution1 = randn(e_num,1)*(thermal_velocity/sqrt(2));
 distribution2 = randn(e_num,1)*(thermal_velocity/sqrt(2));
 maxwell_boltzmann_dist = sqrt((distribution1.^2)+(distribution2.^2));
 random_velocity = maxwell_boltzmann_dist;
-bin_num = 10;
 figure(4)
 histogram(random_velocity,bin_num);
 title('Thermal Velocity Distribution')
@@ -224,7 +224,7 @@ axis([0 200e-9 0 100e-9])
 pause(sim_pause)
 
 averageVel = (mean(new_xvelocity.^2)) + (mean(new_yvelocity.^2));
-temp(time) = (averageVel*me)/(2*k);
+temp(time) = (averageVel*me)/(2*k); % Collect value of temperature over the simulation length
 MFP(time) = averageVel*Tmn; % Uses the given Tmn to find the MFP for this simulation
 TMN(time) = MFP_Q1/averageVel; % Uses the previously calculated MFP in part 1 to find the average time of collisions
 
@@ -274,7 +274,6 @@ distribution1 = randn(e_num,1)*(thermal_velocity/sqrt(2));
 distribution2 = randn(e_num,1)*(thermal_velocity/sqrt(2));
 maxwell_boltzmann_dist = sqrt((distribution1.^2)+(distribution2.^2));
 random_velocity = maxwell_boltzmann_dist;
-bin_num = 10;
 figure(8)
 histogram(random_velocity,bin_num);
 title('Thermal Velocity Distribution')
@@ -301,13 +300,13 @@ inboundx = (initial_xposition < ((length/2)+(Lbottle/2))) & (initial_xposition >
 inboundy = (initial_yposition < ((height/2)-(Hbottle/2))) | (initial_yposition > ((height/2)+(Hbottle/2)));
 inbound = inboundx & inboundy;
 while(max(inbound) > 0)
-initial_xposition(inbound) = rand(size(initial_xposition(inbound),1),1)*length;
-initial_yposition(inbound) = rand(size(initial_yposition(inbound),1),1)*height;
-%initial_xposition(inbound) = rand(size(inbound,1),1)*length;
-%initial_yposition(inbound) = rand(size(inbound,1),1)*height;
-inboundx = (initial_xposition < ((length/2)+(Lbottle/2))) & (initial_xposition > ((length/2)-(Lbottle/2)));
-inboundy = (initial_yposition < ((height/2)-(Hbottle/2))) | (initial_yposition > ((height/2)+(Hbottle/2)));
-inbound = inboundx & inboundy;
+    initial_xposition(inbound) = rand(size(initial_xposition(inbound),1),1)*length;
+    initial_yposition(inbound) = rand(size(initial_yposition(inbound),1),1)*height;
+    %initial_xposition(inbound) = rand(size(inbound,1),1)*length;
+    %initial_yposition(inbound) = rand(size(inbound,1),1)*height;
+    inboundx = (initial_xposition < ((length/2)+(Lbottle/2))) & (initial_xposition > ((length/2)-(Lbottle/2)));
+    inboundy = (initial_yposition < ((height/2)-(Hbottle/2))) | (initial_yposition > ((height/2)+(Hbottle/2)));
+    inbound = inboundx & inboundy;
 end
 
 
@@ -448,12 +447,8 @@ MFP_average = mean(MFP) % Mean distance travelled before collision occurs
 TMN_average = mean(TMN) % Mean time between collisions calculated using a known 
 
 
-
+% test to see if git worked
 figure(12)
 hist3([new_xposition new_yposition],[10,10])
 set(gcf,'renderer','opengl');
 set(get(gca,'child'),'FaceColor','interp','CDataMode','auto');
-
-
-
-
