@@ -27,7 +27,7 @@ height = 100e-9;        % size of simulation in y direction (m)
 temperature = 300;      % temperature in kelvin
 me = 0.26*m0;           % Effective mass of an electorn in our simulation
 e_num = 300;            % Number of electrons in the simulation 
-simlength = 50;        % Sets the number of iterations the simulation undergoes
+simlength = 2;        % Sets the number of iterations the simulation undergoes
 graph_pause = 1;        % Length graph is presented in a figure 
 sim_pause = 0.0000001;  % 
 % the bin number calculation gives a reasonable bin number for any amount
@@ -40,7 +40,6 @@ boundary_type =  0; % 0 is for specular 1 for diffusive boudary type
 % Initial Calculations 
 % Question 1.a THERMAL VELOCITY
 thermal_velocity = sqrt((2*k*temperature)/me); % velocity in (m/s)
-fprintf('QUESTION 1\n')
 fprintf('The thermal velocity of all of the particles Vth = %d',thermal_velocity);
 fprintf('(m/s) \n')
 
@@ -277,7 +276,6 @@ calculated_Tmn_Q2 = (timestep*simlength*e_num)/(collision_num);
 calculated_MFP_Q2 = calculated_Tmn_Q2*averageVel;
 
 % Printing the answer statments 
-fprintf('\nQUESTION 2')
 fprintf('\nThe average time between collisions was found to be %d',calculated_Tmn_Q2)
 fprintf(' (s)\nComparing this to the given value of %d (s)',Tmn)
 fprintf('\nThe mean free path was calculated to be %d',calculated_MFP_Q2)
@@ -367,7 +365,6 @@ temp = [initial_temp];
 
 % Scattering Equations
 Pscatter = (1-exp(-(timestep/Tmn))); % Used to compare to random variable for scattering chance
-collision_num = 0;
 
 % Simulation loop that continually updates the simulation at each timestep
 % and calculates the average velocity
@@ -378,14 +375,11 @@ for time = 1:simlength
     distribution2 = randn(e_num,1)*(thermal_velocity/sqrt(2));
     maxwell_boltzmann_dist = sqrt((distribution1.^2)+(distribution2.^2));
     new_velocity = maxwell_boltzmann_dist;
-    for index = 1:e_num 
+    for index = 1:e_num
         if rand_threshold(index) < Pscatter 
             theta = 2*pi*rand(1);
             new_xvelocity(index) = cos(theta)*new_velocity(index);  
             new_yvelocity(index) = sin(theta)*new_velocity(index);
-            %Counts the number of collisions that have occured to be used
-            %to calculate the mean time between collisions 
-            collision_num = collision_num + 1;
         end
     end
     
@@ -475,7 +469,7 @@ calculated_Tmn_Q3 = (timestep*simlength*e_num)/(collision_num);
 calculated_MFP_Q3 = calculated_Tmn_Q3*averageVel;
 
 % Printing the answer statments 
-fprintf('\nQUESTION 3')
+
 fprintf('\nThe average time between collisions was found to be %d',calculated_Tmn_Q3)
 fprintf(' (s)\nComparing this to the given value of %d (s)',Tmn)
 fprintf('\nThe mean free path was calculated to be %d',calculated_MFP_Q3)
