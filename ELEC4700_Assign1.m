@@ -25,15 +25,18 @@ k = 1.381e-23; % boltzmans constant
 length = 200e-9;        % size of simulation in x dierection (m)
 height = 100e-9;        % size of simulation in y direction (m)
 temperature = 300;      % temperature in kelvin
-me = 0.26*m0;           % Effective mass of an electorn in our simulation
-e_num = 3000;            % Number of electrons in the simulation 
-simlength = 20;        % Sets the number of iterations the simulation undergoes
-graph_pause = 1;        % Length graph is presented in a figure 
-sim_pause = 0.00001;  % 
+me = 0.26*m0;           % Effective mass of an electron in our simulation
+e_num = 10000;          % Number of electrons in the simulation 
+simlength = 1000;       % Sets the number of iterations the simulation undergoes, 1 interation is 1 femtosecond
+graph_pause = 0;        % Length graph is presented in a figure 
+sim_pause = 0;          % Sets the length of time that the simulation pauses for at each step 
 % the bin number calculation gives a reasonable bin number for any amount
 % of particles over 30, 
-bin_num =  10; %ceil(2.5*log10(e_num));           % Histogram bin number 
-% Choose the type of boundary conditions for the third simulation
+bin_num =  10; %ceil(3*log10(e_num));           % Histogram bin number 
+% The bin number for the amount of bins in the electron density plot for
+% part 3
+bin_num_3D = 20; 
+% Choose the type of boundary conditions for the third simulation 
 boundary_type =  0; % 0 is for specular 1 for diffusive boudary type
 %-------------------------------------------------------------------------
 
@@ -70,7 +73,7 @@ new_yposition = initial_yposition;
 new_xvelocity = initial_xvelocity;
 new_yvelocity = initial_yvelocity;
 
-initial_velocity = (mean(new_xvelocity.^2)) + (mean(new_yvelocity.^2));
+initial_velocity = (mean(initial_xvelocity.^2)) + (mean(initial_yvelocity.^2));
 initial_temp = (initial_velocity*me)/(2*k);
 temp = [initial_temp];
 
@@ -112,8 +115,8 @@ for time = 1:simlength
     axis([0 200e-9 0 100e-9]) 
     pause(sim_pause)
 end
-time = 1:simlength;
-
+time = 0:simlength;
+temp = [initial_temp temp];
 % Question 1.c.ii TEMPERATURE PLOT
 % Plotting the temperature as a function of time using the timestep for the
 % x axis to get the actual time in the simulation. 
@@ -170,7 +173,7 @@ initial_yvelocity = random_velocity.*sin(theta).*ones(e_num,1); %
 
 % Initial position plot 
 figure(5)
-plot(initial_xposition, initial_yposition, 'o')
+plot(initial_xposition, initial_yposition, 'ko')
 title('Initial Particle Positions')
 xlabel('X Position (m)')
 ylabel('Y Position (m)')
@@ -256,7 +259,8 @@ for time = 1:simlength
 end
 
 % Question 2.c TEMPERATURE PLOT
-time = 1:simlength;
+time = 0:simlength;
+temp = [initial_temp temp];
 % Plotting the Temperature of the system
 figure(7)
 plot(time*timestep,temp)
@@ -276,12 +280,18 @@ calculated_Tmn_Q2 = (timestep*simlength*e_num)/(collision_num);
 % particles in the simulation
 calculated_MFP_Q2 = calculated_Tmn_Q2*averageVel;
 
+% Calculating the percent error of the mean time and mean free path
+percent_error_Tmn = (100*abs(calculated_Tmn_Q2-Tmn))/Tmn;
+percent_error_MFP = (100*abs(calculated_MFP_Q2-MFP_Q1))/MFP_Q1;
+
 % Printing the answer statments 
 fprintf('\nQUESTION 2')
 fprintf('\nThe average time between collisions was found to be %d',calculated_Tmn_Q2)
 fprintf(' (s)\nComparing this to the given value of %d (s)',Tmn)
+fprintf('\nThe percent error of the average time is %f percent',percent_error_Tmn)
 fprintf('\nThe mean free path was calculated to be %d',calculated_MFP_Q2)
-fprintf(' (m)\nComparing this to the preeviously calculated value of %d (m)\n',MFP_Q1)
+fprintf(' (m)\nComparing this to the previously calculated value of %d (m)\n',MFP_Q1)
+fprintf('The percent error of the MFP is %f percent\n',percent_error_MFP)
 %-------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -346,7 +356,7 @@ initial_yvelocity = random_velocity.*sin(theta).*ones(e_num,1); %
 
 % Plots the initial positions of the particles 
 figure(9)
-plot(initial_xposition, initial_yposition, 'o')
+plot(initial_xposition, initial_yposition, 'ko')
 title('Initial Particle Positions')
 xlabel('X Position (m)')
 ylabel('Y Position (m)')
@@ -423,10 +433,11 @@ for time = 1:simlength
         % for the electrons to the right of the boundary
         new_xvelocity(overhorizontal & previous_right) = abs(cos(theta(overhorizontal & previous_right)).*new_velocity(overhorizontal & previous_right));
         new_yvelocity(overhorizontal & previous_right) = sin(theta(overhorizontal & previous_right)).*new_velocity(overhorizontal & previous_right);
-        % for theelectron sin the tunnel region
+        % for the electrons in the tunnel region
         new_xvelocity(overhorizontal & previous_in) = cos(theta(overhorizontal & previous_in)).*new_velocity(overhorizontal & previous_in);
         new_yvelocity(overhorizontal & previous_in) = sin(theta(overhorizontal & previous_in)).*new_velocity(overhorizontal & previous_in);
-
+        % To boot any stray particles that may be stuck
+        new_xposition(overhorizontal & ~previous_left & ~previous_right & ~previous_in) = 
     else 
         new_xvelocity(overhorizontal & (previous_left | previous_right)) = -new_xvelocity(overhorizontal & (previous_left | previous_right));
         new_yvelocity(overhorizontal & previous_in) = -new_yvelocity(overhorizontal & previous_in);
@@ -452,7 +463,8 @@ for time = 1:simlength
 end
 
 % Question 1.c.ii TEMPERATURE PLOT
-time = 1:simlength;
+time = 0:simlength;
+temp = [initial_temp temp];
 
 figure(11) % Plotting the Temperature of the system
 plot(time*timestep,temp)
@@ -472,23 +484,29 @@ calculated_Tmn_Q3 = (timestep*simlength*e_num)/(collision_num);
 % particles in the simulation
 calculated_MFP_Q3 = calculated_Tmn_Q3*averageVel;
 
+% Calculating the percent error fom the correct answer
+percent_error_Tmn = (100*abs(calculated_Tmn_Q3-Tmn))/Tmn;
+percent_error_MFP = (100*abs(calculated_MFP_Q3-MFP_Q1))/MFP_Q1;
+
 % Printing the answer statments 
 fprintf('\nQUESTION 3')
 fprintf('\nThe average time between collisions was found to be %d',calculated_Tmn_Q3)
 fprintf(' (s)\nComparing this to the given value of %d (s)',Tmn)
+fprintf('\nThe percent error of the average time is %f percent',percent_error_Tmn)
 fprintf('\nThe mean free path was calculated to be %d',calculated_MFP_Q3)
 fprintf(' (m)\nComparing this to the preeviously calculated value of %d (m)\n',MFP_Q1)
+fprintf('The percent error of the MFP is %f percent\n',percent_error_MFP)
 
 % Plotting a 3D histogram for the elecron density over the surface of the simulation    
 figure(12)
-hist3([new_xposition new_yposition],[10,10])
+hist3([new_xposition new_yposition],[bin_num_3D bin_num_3D])
 set(gcf,'renderer','opengl');
 set(get(gca,'child'),'FaceColor','interp','CDataMode','auto');
-pause(graph_pause)
 title('Electron Density Visual Map')
 xlabel('Distance in X Direction (m)')
 ylabel('Distance in Y Direction (m)')
 zlabel('number of Electron in Area')
+pause(graph_pause)
 
 % Calculates the velocity of each of the particles so thaty they can be
 % made into a temperature map.
@@ -505,6 +523,6 @@ grid on
 title('Coloured Temperature Map of Particles')
 xlabel('Distance in X Direction (m)')
 ylabel('Distance in Y Direction (m)')
-pause(graph_pause)
 axis([0 200e-9 0 100e-9])
+pause(graph_pause)
 
