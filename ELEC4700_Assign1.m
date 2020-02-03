@@ -3,10 +3,10 @@
 % Class: ELEC 4700 
 % Document: Assignment 1
 
-% QUESTIONS
-% Q1: how do i get the trajectories not just the current values 
-% Q2: mean free path for part 2 and how to get the time between collisions 
-% Q3: How do i fix time on the temp graphs 
+% MODEL INSTRUCTIONS
+% Please first run the simulation with the parameters provided before playing with them to see
+% the simulation run as i intended it to. Most the of the model parameters
+% are self explanatory but there is some help if needed.
 
 % Clears all of the variables, the command line, and closes all previous
 % graphs 
@@ -20,24 +20,32 @@ k = 1.381e-23; % boltzmans constant
 
 % Model Parameters
 % ------------------------------------------------------------------------
+% ------------------------------------------------------------------------
 % These parameters can be changed to see the effect they have on the
 % simulation 
 length = 200e-9;        % size of simulation in x dierection (m)
 height = 100e-9;        % size of simulation in y direction (m)
-temperature = 300;      % temperature in kelvin
+Lbottle = 80e-9;        % sets the size of the bottleneck length
+Hbottle = 20e-9;        % sets the size of the bottlenck height
+temperature = 300;      % temperature of the system in kelvin
 me = 0.26*m0;           % Effective mass of an electron in our simulation
-e_num = 10000;          % Number of electrons in the simulation 
-simlength = 1000;       % Sets the number of iterations the simulation undergoes, 1 interation is 1 femtosecond
+e_num = 100;         % Number of electrons in the simulation 
+simlength = 1000;         % Sets the number of iterations the simulation undergoes, 1 interation is 1 femtosecond
 graph_pause = 0;        % Length graph is presented in a figure 
 sim_pause = 0;          % Sets the length of time that the simulation pauses for at each step 
-% the bin number calculation gives a reasonable bin number for any amount
-% of particles over 30, 
-bin_num =  10; %ceil(3*log10(e_num));           % Histogram bin number 
-% The bin number for the amount of bins in the electron density plot for
-% part 3
-bin_num_3D = 20; 
+bin_num =  20;          % Histogram bin number 
+bin_num_3D = 12;        % gives the number of bins for the 3d histogram electron density plot
 % Choose the type of boundary conditions for the third simulation 
-boundary_type =  0; % 0 is for specular 1 for diffusive boudary type
+boundary_type =  1; % 0 is for specular 1 for diffusive boundary type
+% Setting whether or not the electron density is displayed as a movie. If
+% the value is 0 then it will just show the final electron density but if
+% the value is 1 it will play the electron density as a movie in real time.
+e_density_movie = 0;
+% As with the electron density map, the temperature map can be played as a
+% movie as well, this is computationally expensive and not recommended for
+% large numbers of particles or iterations.
+temp_movie = 0;
+%-------------------------------------------------------------------------
 %-------------------------------------------------------------------------
 
 % Initial Calculations 
@@ -54,10 +62,14 @@ theta = 2*pi*rand(e_num,1); % Initializes a vector of random angles the size of 
 initial_xvelocity = thermal_velocity.*cos(theta).*ones(e_num,1); % Sets the initial velocity as the thermal temperature  
 initial_yvelocity = thermal_velocity.*sin(theta).*ones(e_num,1); % 
 
+% Assigning each particle a random colour from the rgb grid so they can be
+% identified in the simulation
+colour_specs = rand(e_num,3)
 % Plotting the initial positions of the electrons as they are distributed
 % over the surface
 figure(1)
-plot(initial_xposition, initial_yposition, 'ko')
+scatter(initial_xposition, initial_yposition, 'ko')
+hold on
 title('Initial Particle Positions')
 xlabel('X Position (m)')
 ylabel('Y Position (m)')
@@ -68,8 +80,8 @@ pause(graph_pause) % use a pause to see the graph as the simulatoin is running
 % Timestep is the amount of time between each interval of the calculations 
 timestep = 1e-15; % 1 femtosecond 
 
-new_xposition = initial_xposition; % Sets the 
-new_yposition = initial_yposition;
+old_xposition = initial_xposition; % Sets the 
+old_yposition = initial_yposition;
 new_xvelocity = initial_xvelocity;
 new_yvelocity = initial_yvelocity;
 
@@ -79,7 +91,8 @@ temp = [initial_temp];
 
 % Simulation loop that continually updates the simulation at each timestep
 % and calculates the new positions of the particles by using time and
-% velocity. At each iteration the average velocity is found and 
+% velocity. At each iteration the average velocity is found and used to
+% calculate the systems temperature
 for time = 1:simlength 
     % The average velocity and the temperature of the system at each time
     % step are calculated to be used in plotting and finding the mean free
@@ -88,8 +101,8 @@ for time = 1:simlength
     temp(time) = (averageVel*me)/(2*k); 
     
     % Updating the new positions using the velocity
-    new_xposition = new_xposition + new_xvelocity*timestep;
-    new_yposition = new_yposition + new_yvelocity*timestep;
+    new_xposition = old_xposition + new_xvelocity*timestep;
+    new_yposition = old_yposition + new_yvelocity*timestep;
 
     % Boundary Conditions being imposed for particle wrap around and
     % reflectoin at the tep and bottom of the simulation surface
@@ -106,21 +119,26 @@ for time = 1:simlength
 
     % Plotting the updating positions 
     % Question 1.c.i 2D PLOT OF TRAJECTORIES
-    figure(2)
-    plot(new_xposition,new_yposition,'ro')
-    title('Simulation')
+    scatter(new_xposition,new_yposition,2,colour_specs)
+    title('Simulation Number 1')
     xlabel('Distance (nm)')
     ylabel('Distance (nm)')
     grid on
     axis([0 200e-9 0 100e-9]) 
     pause(sim_pause)
+    
+    old_xposition = new_xposition;
+    old_yposition = new_yposition;
+    
 end
+hold off
+
 time = 0:simlength;
 temp = [initial_temp temp];
 % Question 1.c.ii TEMPERATURE PLOT
 % Plotting the temperature as a function of time using the timestep for the
 % x axis to get the actual time in the simulation. 
-figure(3) 
+figure(2)
 plot(time*timestep,temp)
 title('Simulation Temperature Over Time')
 xlabel('Time (s)')
@@ -154,7 +172,7 @@ maxwell_boltzmann_dist = sqrt((distribution1.^2)+(distribution2.^2));
 random_velocity = maxwell_boltzmann_dist;
 
 % Plot of the histogram of the distributed velocities 
-figure(4)
+figure(3)
 histogram(random_velocity,bin_num);
 title('Thermal Velocity Distribution')
 xlabel('Random Thermal Velocity (m/s)')
@@ -172,8 +190,9 @@ initial_xvelocity = random_velocity.*cos(theta).*ones(e_num,1); % Sets the initi
 initial_yvelocity = random_velocity.*sin(theta).*ones(e_num,1); % 
 
 % Initial position plot 
-figure(5)
-plot(initial_xposition, initial_yposition, 'ko')
+figure(4)
+scatter(initial_xposition, initial_yposition, 'ko')
+hold on
 title('Initial Particle Positions')
 xlabel('X Position (m)')
 ylabel('Y Position (m)')
@@ -243,12 +262,10 @@ for time = 1:simlength
 
     % Plotting the updating positions of the particle trajectories
     % Question 2.b 2D PLOT OF TRAJECTORIES
-    figure(6)
-    plot(new_xposition,new_yposition,'ro')
-    title('Simulation')
+    scatter(new_xposition,new_yposition,2,colour_specs)
+    title('Simulation Number 2')
     xlabel('Distance (nm)')
     ylabel('Distance (nm)')
-    grid on
     axis([0 200e-9 0 100e-9]) 
     pause(sim_pause)
     
@@ -257,12 +274,13 @@ for time = 1:simlength
     % Collect value of temperature over the simulation length
     temp(time) = (averageVel*me)/(2*k);
 end
+hold off
 
 % Question 2.c TEMPERATURE PLOT
 time = 0:simlength;
 temp = [initial_temp temp];
 % Plotting the Temperature of the system
-figure(7)
+figure(5)
 plot(time*timestep,temp)
 title('Average Temperature Over Time')
 xlabel('Time (s)')
@@ -286,6 +304,7 @@ percent_error_MFP = (100*abs(calculated_MFP_Q2-MFP_Q1))/MFP_Q1;
 
 % Printing the answer statments 
 fprintf('\nQUESTION 2')
+fprintf('\nThe amount of collisions that occured collisions = %d ',collision_num)
 fprintf('\nThe average time between collisions was found to be %d',calculated_Tmn_Q2)
 fprintf(' (s)\nComparing this to the given value of %d (s)',Tmn)
 fprintf('\nThe percent error of the average time is %f percent',percent_error_Tmn)
@@ -310,7 +329,7 @@ maxwell_boltzmann_dist = sqrt((distribution1.^2)+(distribution2.^2));
 random_velocity = maxwell_boltzmann_dist;
 
 % Plotting the histogram of the randomly generated distribution 
-figure(8)
+figure(6)
 histogram(random_velocity,bin_num);
 title('Thermal Velocity Distribution')
 xlabel('Random Thermal Velocity (m/s)')
@@ -325,11 +344,6 @@ pause(graph_pause)
 % Initializing the Simulation Parameters 
 initial_xposition = length*rand(e_num,1); % Sets the initial x positions as a vector of randomly selected numbers over the length of the simulation
 initial_yposition = height*rand(e_num,1); % Sets the initial y position as a vector of randomly selected numbers over the length of the simulation
-
-% Reinitializing electrons that spawned in restricted regions
-% Length of the channel or bottleneck and height are determined here
-Lbottle = 80e-9;
-Hbottle = 20e-9;
 
 % Checking the boundaries and marking the particles that have spawned
 % inside the restrcted region.
@@ -355,8 +369,9 @@ initial_xvelocity = random_velocity.*cos(theta).*ones(e_num,1); % Sets the initi
 initial_yvelocity = random_velocity.*sin(theta).*ones(e_num,1); % 
 
 % Plots the initial positions of the particles 
-figure(9)
-plot(initial_xposition, initial_yposition, 'ko')
+figure(7)
+scatter(initial_xposition, initial_yposition, 'ko')
+hold on
 title('Initial Particle Positions')
 xlabel('X Position (m)')
 ylabel('Y Position (m)')
@@ -366,8 +381,8 @@ pause(graph_pause)
 
 timestep = 1e-15; % Timestep is the amount of time between each interval of the calculations 
 
-old_xposition = initial_xposition;  
-old_yposition = initial_yposition;
+new_xposition = initial_xposition;  
+new_yposition = initial_yposition;
 new_xvelocity = initial_xvelocity;
 new_yvelocity = initial_yvelocity;
 
@@ -378,6 +393,18 @@ temp = [initial_temp];
 % Scattering Equations
 Pscatter = (1-exp(-(timestep/Tmn))); % Used to compare to random variable for scattering chance
 collision_num = 0;
+
+old_xposition = new_xposition;  
+old_yposition = new_yposition;
+
+if(e_density_movie == 1 || temp_movie == 1)
+    x_position_hist = [ones(e_num,simlength)];
+    y_position_hist = [ones(e_num,simlength)];
+    particle_velocity_hist = [ones(e_num,simlength)];
+    particle_temp_hist = [ones(e_num,simlength)];
+end
+    
+
 
 % Simulation loop that continually updates the simulation at each timestep
 % and calculates the average velocity
@@ -414,9 +441,11 @@ for time = 1:simlength
 
     % Restricted Region Boundary Cases
     overhorizontal =  (new_xposition > ((length/2)-(Lbottle/2))) & (new_xposition < ((length/2)+(Lbottle/2))) & ((new_yposition < ((height/2)-(Hbottle/2))) | (new_yposition > ((height/2)+(Hbottle/2))));
-    previous_left = (old_xposition < ((length/2)-(Lbottle/2)));
-    previous_right = (old_xposition > ((length/2)+(Lbottle/2)));
+    previous_left = (old_xposition <= ((length/2)-(Lbottle/2)));
+    previous_right = (old_xposition >= ((length/2)+(Lbottle/2)));
     previous_in = (old_xposition > ((length/2)-(Lbottle/2))) & (old_xposition < ((length/2)+(Lbottle/2)));
+    previous_up = (old_yposition > (height/2));
+    previous_down = (old_yposition <= (height/2));
     % if particles come from left and go over to restricted region, flip the
     % velocities 
     % Diffusive Boundary (Random Generated new velocity)
@@ -434,20 +463,22 @@ for time = 1:simlength
         new_xvelocity(overhorizontal & previous_right) = abs(cos(theta(overhorizontal & previous_right)).*new_velocity(overhorizontal & previous_right));
         new_yvelocity(overhorizontal & previous_right) = sin(theta(overhorizontal & previous_right)).*new_velocity(overhorizontal & previous_right);
         % for the electrons in the tunnel region
-        new_xvelocity(overhorizontal & previous_in) = cos(theta(overhorizontal & previous_in)).*new_velocity(overhorizontal & previous_in);
-        new_yvelocity(overhorizontal & previous_in) = sin(theta(overhorizontal & previous_in)).*new_velocity(overhorizontal & previous_in);
+        new_xvelocity(overhorizontal & previous_in & previous_up) = cos(theta(overhorizontal & previous_in & previous_up)).*new_velocity(overhorizontal & previous_in & previous_up);
+        new_yvelocity(overhorizontal & previous_in & previous_up) = -abs(sin(theta(overhorizontal & previous_in & previous_up)).*new_velocity(overhorizontal & previous_in & previous_up));
+        new_xvelocity(overhorizontal & previous_in & previous_down ) = cos(theta(overhorizontal & previous_in & previous_down)).*new_velocity(overhorizontal & previous_in & previous_down);
+        new_yvelocity(overhorizontal & previous_in & previous_down) = abs(sin(theta(overhorizontal & previous_in & previous_down)).*new_velocity(overhorizontal & previous_in & previous_down));
         % To boot any stray particles that may be stuck
-        new_xposition(overhorizontal & ~previous_left & ~previous_right & ~previous_in) = 
+        %new_xposition(overhorizontal & ~previous_left & ~previous_right & ~previous_in) = new_xposition(overhorizontal & ~previous_left & ~previous_right & ~previous_in) - 
     else 
+        % Specular boundary conditions
         new_xvelocity(overhorizontal & (previous_left | previous_right)) = -new_xvelocity(overhorizontal & (previous_left | previous_right));
         new_yvelocity(overhorizontal & previous_in) = -new_yvelocity(overhorizontal & previous_in);
     end
 
     % Plotting the updating positions 
     % Question 3.a 2D PLOT OF TRAJECTORIES
-    figure(10)
-    plot(new_xposition,new_yposition,'ro')
-    title('Simulation')
+    scatter(new_xposition,new_yposition,2,colour_specs)
+    title('Simulation Number 3')
     xlabel('Distance (nm)')
     ylabel('Distance (nm)')
     grid on
@@ -459,14 +490,25 @@ for time = 1:simlength
 
     old_xposition = new_xposition;
     old_yposition = new_yposition;
-
+    
+    if(e_density_movie == 1 || temp_movie == 1)
+        x_position_hist(:,time) = new_xposition;
+        y_position_hist(:,time) = new_yposition;
+    end
+    if(temp_movie == 1)
+        particle_velocity_hist(:,time) = sqrt((new_xvelocity.^2)+(new_yvelocity.^2));
+        particle_temp_hist(:,time) = (particle_velocity_hist(:,time).*me)./(2*k);
+    end
+    
 end
+hold off
 
-% Question 1.c.ii TEMPERATURE PLOT
+% Concatenating to get the initial temperature of the system in the plot 
 time = 0:simlength;
 temp = [initial_temp temp];
 
-figure(11) % Plotting the Temperature of the system
+% Plotting the Temperature of the system
+figure(8)
 plot(time*timestep,temp)
 title('Average Temperature Over Time')
 xlabel('Time (s)')
@@ -490,6 +532,7 @@ percent_error_MFP = (100*abs(calculated_MFP_Q3-MFP_Q1))/MFP_Q1;
 
 % Printing the answer statments 
 fprintf('\nQUESTION 3')
+fprintf('\nThe amount of collisions that occured collisions = %d ',collision_num)
 fprintf('\nThe average time between collisions was found to be %d',calculated_Tmn_Q3)
 fprintf(' (s)\nComparing this to the given value of %d (s)',Tmn)
 fprintf('\nThe percent error of the average time is %f percent',percent_error_Tmn)
@@ -497,16 +540,34 @@ fprintf('\nThe mean free path was calculated to be %d',calculated_MFP_Q3)
 fprintf(' (m)\nComparing this to the preeviously calculated value of %d (m)\n',MFP_Q1)
 fprintf('The percent error of the MFP is %f percent\n',percent_error_MFP)
 
-% Plotting a 3D histogram for the elecron density over the surface of the simulation    
-figure(12)
-hist3([new_xposition new_yposition],[bin_num_3D bin_num_3D])
-set(gcf,'renderer','opengl');
-set(get(gca,'child'),'FaceColor','interp','CDataMode','auto');
-title('Electron Density Visual Map')
-xlabel('Distance in X Direction (m)')
-ylabel('Distance in Y Direction (m)')
-zlabel('number of Electron in Area')
-pause(graph_pause)
+% Plotting a 3D histogram for the elecron density over the surface of the simulation 
+if(e_density_movie == 1)
+    for a = 1:simlength
+        figure(9)
+        hist3([x_position_hist(:,a) y_position_hist(:,a)],[bin_num_3D bin_num_3D])
+        colormap jet;
+        colorbar;
+        set(gcf,'renderer','opengl');
+        set(get(gca,'child'),'FaceColor','interp','CDataMode','auto');
+        title('Electron Density Visual Map')
+        xlabel('Distance in X Direction (m)')
+        ylabel('Distance in Y Direction (m)')
+        zlabel('number of Electron in Area')
+        pause(sim_pause)
+    end
+else 
+    figure(9)
+        hist3([new_xposition new_yposition],[bin_num_3D bin_num_3D])
+        colormap jet
+        colorbar
+        set(gcf,'renderer','opengl');
+        set(get(gca,'child'),'FaceColor','interp','CDataMode','auto');
+        title('Electron Density Visual Map')
+        xlabel('Distance in X Direction (m)')
+        ylabel('Distance in Y Direction (m)')
+        zlabel('number of Electron in Area')
+        pause(graph_pause)
+end
 
 % Calculates the velocity of each of the particles so thaty they can be
 % made into a temperature map.
@@ -514,15 +575,34 @@ particleVel = sqrt((new_xvelocity.^2) + (new_yvelocity.^2));
 particleTemp = (particleVel.*me)./(2*k);
 
 % Plots the colour spectrum for the particles for their calculated
-% temperature and a bar to help dicern the temperature a=of a given
-% particle
-figure(13)
-scatter(new_xposition,new_yposition,12,particleTemp)
-colorbar
-grid on
-title('Coloured Temperature Map of Particles')
-xlabel('Distance in X Direction (m)')
-ylabel('Distance in Y Direction (m)')
-axis([0 200e-9 0 100e-9])
-pause(graph_pause)
+% temperature and a bar to help dicern the temperature of a given
+% particle. There is a choice between playing the temperature as a movie of
+% the simulation or it can be just displayed as the final values of
+% velocity and position.
+if(temp_movie == 1)
+    figure(10)
+    for a = 1:simlength
+        scatter(x_position_hist(:,a), y_position_hist(:,a),12,particle_temp_hist(:,a))
+        colormap jet
+        colorbar
+        grid on
+        title('Coloured Temperature Map of Particles')
+        xlabel('Distance in X Direction (m)')
+        ylabel('Distance in Y Direction (m)')
+        axis([0 200e-9 0 100e-9])
+        pause(sim_pause)
+    end
+else
+    figure(10)
+    scatter(new_xposition,new_yposition,12,particleTemp)
+    colormap jet
+    colorbar
+    grid on
+    title('Coloured Temperature Map of Particles')
+    xlabel('Distance in X Direction (m)')
+    ylabel('Distance in Y Direction (m)')
+    axis([0 200e-9 0 100e-9])
+    pause(graph_pause)
+end
+
 
