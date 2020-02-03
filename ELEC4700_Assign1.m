@@ -29,14 +29,14 @@ Lbottle = 80e-9;        % sets the size of the bottleneck length
 Hbottle = 20e-9;        % sets the size of the bottlenck height
 temperature = 300;      % temperature of the system in kelvin
 me = 0.26*m0;           % Effective mass of an electron in our simulation
-e_num = 100;         % Number of electrons in the simulation 
+e_num = 5000;         % Number of electrons in the simulation 
 simlength = 1000;         % Sets the number of iterations the simulation undergoes, 1 interation is 1 femtosecond
-graph_pause = 0;        % Length graph is presented in a figure 
-sim_pause = 0;          % Sets the length of time that the simulation pauses for at each step 
-bin_num =  20;          % Histogram bin number 
-bin_num_3D = 12;        % gives the number of bins for the 3d histogram electron density plot
+graph_pause = 4;        % Length graph is presented in a figure 
+sim_pause = 0.01;          % Sets the length of time that the simulation pauses for at each step 
+bin_num =  25;          % Histogram bin number 
+bin_num_3D = 20;       % gives the number of bins for the 3d histogram electron density plot
 % Choose the type of boundary conditions for the third simulation 
-boundary_type =  1; % 0 is for specular 1 for diffusive boundary type
+boundary_type =  0; % 0 is for specular 1 for diffusive boundary type
 % Setting whether or not the electron density is displayed as a movie. If
 % the value is 0 then it will just show the final electron density but if
 % the value is 1 it will play the electron density as a movie in real time.
